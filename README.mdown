@@ -1,0 +1,20 @@
+Add DNS server option to Nodejs
+===============================
+The patch enables the current version of Node (0.4.0) to use different DNS servers than the ones specified in resolve.conf, which is the default. To use the DNS server settings use dnsext.js which is a extended version of the normal dns module for node which exposes the initialization of ares channels with different nameservers, as well as the handling of multiple channels. For usage examples see dnsext-example.js
+
+Applying the patch
+------------------
+
+  git clone https://github.com/ry/node.git
+  cd node
+  git apply add_dns_channel_ns_setting.patch
+  
+Usage
+-----
+
+  var dnsext = require('./dnsext');
+  var g = dnsext.initChannelWithNs('8.8.4.4');
+  dnsext.getHostByName(g, 'google.de', function(err, domains){
+  	if(err) console.log(err);
+  	console.log(domains);
+  });

@@ -1,0 +1,40 @@
+From 471654f4092e10cf7d669d8aa718f0c6c23e10b9 Mon Sep 17 00:00:00 2001
+From: Philipp Fehre <philipp.fehre@googlemail.com>
+Date: Mon, 21 Feb 2011 15:26:41 +0100
+Subject: [PATCH] Add DNS server channel setting
+
+---
+ src/node_cares.cc |   17 +++++++++++++++++
+ 1 files changed, 17 insertions(+), 0 deletions(-)
+
+diff --git a/src/node_cares.cc b/src/node_cares.cc
+index 0cffbda..34bb5f1 100644
+--- a/src/node_cares.cc
++++ b/src/node_cares.cc
+@@ -532,6 +532,23 @@ Handle<Value> Channel::New(const Arguments& args) {
+       options.sock_state_cb = Channel::SockStateCb;
+       optmask |= ARES_OPT_SOCK_STATE_CB;
+     }
++
++	  Local<Value> ns = options_o->Get(String::NewSymbol("CHANNEL_NS"));
++	  if (!ns->IsUndefined()) {
++	    int length, family;
++	    char addr_ns[sizeof(struct in_addr)];
++	    String::Utf8Value addr_name(ns->ToString());
++	    if (inet_pton(AF_INET, *addr_name, &addr_ns) == 1) {
++	      length = sizeof(struct in_addr);
++	      family = AF_INET;
++	    } else {
++	      return ThrowException(Exception::Error(
++	            String::New("Invalid IP address")));
++	    }
++	    options.servers = (struct in_addr*) addr_ns;
++	    options.nservers = 1;
++	    optmask |= ARES_OPT_SERVERS;
++	  }
+   }
+ 
+   ares_init_options(&c->channel, &options, optmask);
+-- 
+1.7.3.5
+
