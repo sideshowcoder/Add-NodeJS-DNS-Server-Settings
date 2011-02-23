@@ -36,43 +36,43 @@ function updateTimer() {
 
 // Create a new channel with the set DNS Server
 exports.initChannelWithNs = function(ns) {
-	var channel = new dns.Channel(
-		{SOCK_STATE_CB: function(socket, read, write) {
-	  	var watcher, fd;
-	  	if (process.platform == 'win32') {
-	  	  fd = process.binding('os').openOSHandle(socket);
-	  	} else {
-	  	  fd = socket;
-	  	}
-    	
-	  	if (socket in watchers) {
-	  	  watcher = watchers[socket].watcher;
-	  	} else {
-	  	  watcher = new IOWatcher();
-	  	  watchers[socket] = { read: read, write: write, watcher: watcher };
-    	
-	  	  watcher.callback = function(read, write)  {
-	  	    channel.processFD(read ? socket : dns.SOCKET_BAD,
-	  	                      write ? socket : dns.SOCKET_BAD);
-	  	    updateTimer();
-	  	  };
-	  	}
-    	
-	  	watcher.stop();
-    	
-	  	if (!(read || write)) {
-	  	  delete activeWatchers[socket];
-	  	  return;
-	  	} else {
-	  	  watcher.set(fd, read == 1, write == 1);
-	  	  watcher.start();
-	  	  activeWatchers[socket] = watcher;
-	  	}
-    	
-	  	updateTimer();
-		},
-		CHANNEL_NS: ns
-	});
+	var properties = { SOCK_STATE_CB: function(socket, read, write) {
+  	var watcher, fd;
+  	if (process.platform == 'win32') {
+  	  fd = process.binding('os').openOSHandle(socket);
+  	} else {
+  	  fd = socket;
+  	}
+  	
+  	if (socket in watchers) {
+  	  watcher = watchers[socket].watcher;
+  	} else {
+  	  watcher = new IOWatcher();
+  	  watchers[socket] = { read: read, write: write, watcher: watcher };
+  	
+  	  watcher.callback = function(read, write)  {
+  	    channel.processFD(read ? socket : dns.SOCKET_BAD,
+  	                      write ? socket : dns.SOCKET_BAD);
+  	    updateTimer();
+  	  };
+  	}
+  	
+  	watcher.stop();
+  	
+  	if (!(read || write)) {
+  	  delete activeWatchers[socket];
+  	  return;
+  	} else {
+  	  watcher.set(fd, read == 1, write == 1);
+  	  watcher.start();
+  	  activeWatchers[socket] = watcher;
+  	}
+  	updateTimer();
+	}};
+
+	// 	If a nameserver is given, add it and create channel
+	if(ns) properties['CHANNEL_NS'] = ns;
+	var channel = new dns.Channel(properties);
 	channels[channelid] = channel;
 	return channelid++;
 };
